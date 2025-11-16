@@ -1,34 +1,32 @@
-export const mockRooms = [
+import { type Room } from '@/services/RoomService';
+
+export const mockRooms: Room[] = [
   {
     id: '1',
     name: 'Living Room',
-    deviceCount: 5,
-    activeDevices: 2,
-    power: 0.67,
-    image: 'https://images.pexels.com/photos/1457842/pexels-photo-1457842.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'
+    devices: 5,
+    powerUsage: 0.8,
+    color: '#10B981',
   },
   {
     id: '2',
     name: 'Kitchen',
-    deviceCount: 4,
-    activeDevices: 3,
-    power: 0.42,
-    image: 'https://images.pexels.com/photos/2724749/pexels-photo-2724749.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'
+    devices: 4,
+    powerUsage: 1.2,
+    color: '#3B82F6',
   },
   {
     id: '3',
     name: 'Master Bedroom',
-    deviceCount: 3,
-    activeDevices: 1,
-    power: 0.12,
-    image: 'https://images.pexels.com/photos/1743229/pexels-photo-1743229.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'
+    devices: 3,
+    powerUsage: 0.5,
+    color: '#8B5CF6',
   },
   {
     id: '4',
     name: 'Study Room',
-    deviceCount: 2,
-    activeDevices: 2,
-    power: 0.25,
-    image: 'https://images.pexels.com/photos/1957477/pexels-photo-1957477.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2'
-  }
+    devices: 2,
+    powerUsage: 0.3,
+    color: '#EC4899',
+  },
 ];

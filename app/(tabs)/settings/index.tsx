@@ -1,16 +1,31 @@
-import { useState } from 'react';
-import { StyleSheet, Text, View, ScrollView, useColorScheme, TouchableOpacity, Switch } from 'react-native';
-import { Stack } from 'expo-router';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, ScrollView, TouchableOpacity, Switch } from 'react-native';
+import { Stack, useRouter } from 'expo-router';
 import { ChevronRight, Bell, Moon, Sun, DollarSign, Shield, CircleHelp as HelpCircle, User, LogOut } from 'lucide-react-native';
+import { authService } from '@/services/AuthService';
+import { useTheme } from '@/contexts/ThemeContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function SettingsScreen() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const router = useRouter();
+  const { isDark, toggleTheme } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [darkMode, setDarkMode] = useState(isDark);
+  const [demoMode, setDemoMode] = useState(false);
+  const user = authService.getUser();
 
-  const handleDarkModeToggle = () => {
-    setDarkMode(!darkMode);
+  // Persist demo mode setting
+  useEffect(() => {
+    AsyncStorage.getItem('demoMode').then(val => {
+      if (val === 'true') setDemoMode(true);
+    });
+  }, []);
+  const handleDemoMode = (val: boolean) => {
+    setDemoMode(val);
+    AsyncStorage.setItem('demoMode', val ? 'true' : 'false');
+  };
+
+  const navigateToProfile = () => {
+    router.push('/settings/profile');
   };
 
   return (
@@ -18,6 +33,10 @@ export default function SettingsScreen() {
       <Stack.Screen
         options={{
           title: 'Settings',
+          headerStyle: {
+            backgroundColor: isDark ? '#0F172A' : '#F8FAFC',
+          },
+          headerTintColor: isDark ? '#F8FAFC' : '#0F172A',
         }}
       />
       <ScrollView 
@@ -25,40 +44,47 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: isDark ? '#94A3B8' : '#64748B' }]}>
-            Account
-          </Text>
-
-          <TouchableOpacity style={[styles.settingItem, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}>
-            <View style={styles.settingLeft}>
-              <View style={[styles.iconContainer, { backgroundColor: '#EFF6FF' }]}>
-                <User size={20} color="#3B82F6" />
-              </View>
-              <Text style={[styles.settingText, { color: isDark ? '#F8FAFC' : '#0F172A' }]}>
-                Profile Information
+        {/* Profile Section */}
+        <TouchableOpacity style={[styles.profileSection, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]} onPress={navigateToProfile}>
+          <View style={styles.profileInfo}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>
+                {user?.name.charAt(0).toUpperCase()}
               </Text>
             </View>
-            <ChevronRight size={20} color={isDark ? '#94A3B8' : '#64748B'} />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.settingItem, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}>
-            <View style={styles.settingLeft}>
-              <View style={[styles.iconContainer, { backgroundColor: '#FEF3F2' }]}>
-                <LogOut size={20} color="#EF4444" />
-              </View>
-              <Text style={[styles.settingText, { color: isDark ? '#F8FAFC' : '#0F172A' }]}>
-                Sign Out
-              </Text>
+            <View>
+              <Text style={[styles.name, { color: isDark ? '#F8FAFC' : '#0F172A' }]}>{user?.name}</Text>
+              <Text style={styles.email}>{user?.email}</Text>
             </View>
-            <ChevronRight size={20} color={isDark ? '#94A3B8' : '#64748B'} />
-          </TouchableOpacity>
-        </View>
+          </View>
+          <User size={24} color={isDark ? '#94A3B8' : '#64748B'} />
+        </TouchableOpacity>
 
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: isDark ? '#94A3B8' : '#64748B' }]}>
             Preferences
           </Text>
+          
+          <View style={[styles.settingItem, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}>
+            <View style={styles.settingLeft}>
+              <View style={[styles.iconContainer, { backgroundColor: '#EFF6FF' }]}>
+                {isDark ? (
+                  <Moon size={20} color="#3B82F6" />
+                ) : (
+                  <Sun size={20} color="#3B82F6" />
+                )}
+              </View>
+              <Text style={[styles.settingText, { color: isDark ? '#F8FAFC' : '#0F172A' }]}>
+                Dark Mode
+              </Text>
+            </View>
+            <Switch
+              trackColor={{ false: '#CBD5E1', true: '#0891B2' }}
+              thumbColor={'#FFFFFF'}
+              onValueChange={toggleTheme}
+              value={isDark}
+            />
+          </View>
 
           <View style={[styles.settingItem, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}>
             <View style={styles.settingLeft}>
@@ -79,27 +105,6 @@ export default function SettingsScreen() {
 
           <View style={[styles.settingItem, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}>
             <View style={styles.settingLeft}>
-              <View style={[styles.iconContainer, { backgroundColor: '#EFF6FF' }]}>
-                {isDark ? (
-                  <Moon size={20} color="#3B82F6" />
-                ) : (
-                  <Sun size={20} color="#3B82F6" />
-                )}
-              </View>
-              <Text style={[styles.settingText, { color: isDark ? '#F8FAFC' : '#0F172A' }]}>
-                Dark Mode
-              </Text>
-            </View>
-            <Switch
-              trackColor={{ false: '#CBD5E1', true: '#0891B2' }}
-              thumbColor={'#FFFFFF'}
-              onValueChange={handleDarkModeToggle}
-              value={darkMode}
-            />
-          </View>
-
-          <TouchableOpacity style={[styles.settingItem, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}>
-            <View style={styles.settingLeft}>
               <View style={[styles.iconContainer, { backgroundColor: '#FFF7ED' }]}>
                 <DollarSign size={20} color="#F59E0B" />
               </View>
@@ -108,7 +113,23 @@ export default function SettingsScreen() {
               </Text>
             </View>
             <ChevronRight size={20} color={isDark ? '#94A3B8' : '#64748B'} />
-          </TouchableOpacity>
+          </View>
+
+          {/* Demo Mode Switch */}
+          <View style={[styles.settingItem, { backgroundColor: isDark ? '#1E293B' : '#FFFFFF' }]}> 
+            <View style={styles.settingLeft}>
+              <View style={[styles.iconContainer, { backgroundColor: '#F0FDFA' }]}> 
+                <DollarSign size={20} color="#F59E0B" />
+              </View>
+              <Text style={[styles.settingText, { color: isDark ? '#F8FAFC' : '#0F172A' }]}>Demo Mode</Text>
+            </View>
+            <Switch
+              trackColor={{ false: '#CBD5E1', true: '#F59E0B' }}
+              thumbColor={'#FFFFFF'}
+              onValueChange={handleDemoMode}
+              value={demoMode}
+            />
+          </View>
         </View>
 
         <View style={styles.section}>
@@ -162,15 +183,52 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 32,
   },
+  profileSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E8F0',
+  },
+  profileInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  avatar: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#10B981',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 15,
+  },
+  avatarText: {
+    color: '#fff',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  name: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#0F172A',
+  },
+  email: {
+    fontSize: 14,
+    color: '#64748B',
+  },
   section: {
-    marginBottom: 24,
+    marginTop: 20,
   },
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600',
-    marginBottom: 12,
+    color: '#64748B',
+    marginLeft: 20,
+    marginBottom: 10,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   settingItem: {
     flexDirection: 'row',

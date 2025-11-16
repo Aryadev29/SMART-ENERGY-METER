@@ -1,32 +1,46 @@
-import { View, Text, StyleSheet } from 'react-native';
-import { Zap, DollarSign } from 'lucide-react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { Zap, IndianRupee } from 'lucide-react-native';
+import { usePowerData } from '@/hooks/usePowerData';
 
 interface CurrentUsageCardProps {
-  currentPower: number;
-  currentBill: number;
   isDark: boolean;
 }
 
-export function CurrentUsageCard({ currentPower, currentBill, isDark }: CurrentUsageCardProps) {
+export function CurrentUsageCard({ isDark }: CurrentUsageCardProps) {
+  const { power, hourlyRate, isConnected } = usePowerData();
+  const estimatedDailyBill = hourlyRate * 24; // Convert hourly rate to daily estimate
+
+  const renderValue = (value: number, prefix: string = '', decimals: number = 2) => {
+    if (!isConnected) {
+      return <ActivityIndicator color={isDark ? '#94A3B8' : '#64748B'} />;
+    }
+    return (
+      <Text style={[styles.value, { color: isDark ? '#F8FAFC' : '#0F172A' }]}>
+        {prefix}
+        {value.toFixed(decimals)}
+      </Text>
+    );
+  };
+
   return (
     <View
       style={[
         styles.container,
         {
-          backgroundColor: isDark ? '#1E293B' : '#FFFFFF'
+          backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
+          opacity: isConnected ? 1 : 0.8
         }
       ]}
     >
       <View style={styles.powerSection}>
         <View style={[styles.iconContainer, { backgroundColor: '#F0FDFA' }]}>
-          <Zap size={28} color="#14B8A6" />
+          <Zap size={28} color={isConnected ? '#14B8A6' : '#94A3B8'} />
         </View>
         <View style={styles.valueContainer}>
-          <Text style={[styles.value, { color: isDark ? '#F8FAFC' : '#0F172A' }]}>
-            {currentPower} kW
-          </Text>
+          {renderValue(power)}
+          <Text style={[styles.unit, { color: isDark ? '#94A3B8' : '#64748B' }]}>kW</Text>
           <Text style={[styles.label, { color: isDark ? '#94A3B8' : '#64748B' }]}>
-            Current Usage
+            {isConnected ? 'Current Usage' : 'Connecting...'}
           </Text>
         </View>
       </View>
@@ -35,12 +49,10 @@ export function CurrentUsageCard({ currentPower, currentBill, isDark }: CurrentU
 
       <View style={styles.billSection}>
         <View style={[styles.iconContainer, { backgroundColor: '#FFF7ED' }]}>
-          <DollarSign size={28} color="#F59E0B" />
+          <IndianRupee size={28} color={isConnected ? '#F59E0B' : '#94A3B8'} />
         </View>
         <View style={styles.valueContainer}>
-          <Text style={[styles.value, { color: isDark ? '#F8FAFC' : '#0F172A' }]}>
-            ${currentBill}
-          </Text>
+          {renderValue(estimatedDailyBill, '₹')}
           <Text style={[styles.label, { color: isDark ? '#94A3B8' : '#64748B' }]}>
             Est. Daily Bill
           </Text>
@@ -84,14 +96,24 @@ const styles = StyleSheet.create({
   },
   valueContainer: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    flexWrap: 'wrap',
   },
   value: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: '700',
-    marginBottom: 4,
+  },
+  unit: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 4,
+    color: '#94A3B8',
   },
   label: {
     fontSize: 14,
+    width: '100%',
+    marginTop: 4,
   },
   divider: {
     width: 1,

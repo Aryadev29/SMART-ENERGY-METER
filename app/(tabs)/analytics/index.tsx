@@ -1,10 +1,13 @@
-import { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { StyleSheet, Text, View, ScrollView, useColorScheme, TouchableOpacity } from 'react-native';
 import { Stack } from 'expo-router';
 import { TriangleAlert as AlertTriangle, TrendingDown, TrendingUp } from 'lucide-react-native';
+import { PowerUsageChart } from '@/components/PowerUsageChart';
 import { BarChart } from '@/components/BarChart';
 import { LineChart } from '@/components/LineChart';
+import { deviceService } from '@/services/DeviceService';
 import { mockWeeklyData, mockMonthlyData } from '@/data/mockChartData';
+import { useFonts, Poppins_600SemiBold, Poppins_400Regular } from '@expo-google-fonts/poppins';
 
 export default function AnalyticsScreen() {
   const colorScheme = useColorScheme();
@@ -12,6 +15,29 @@ export default function AnalyticsScreen() {
   const [activeTab, setActiveTab] = useState('daily');
   const [weeklyData] = useState(mockWeeklyData);
   const [monthlyData] = useState(mockMonthlyData);
+
+  const [fontsLoaded] = useFonts({
+    Poppins_600SemiBold,
+    Poppins_400Regular,
+  });
+
+  const devices = deviceService.getDevices();
+
+  const categoryData = useMemo(() => {
+    const data: Record<string, number> = {};
+    devices.forEach(device => {
+      const category = device.category || 'other';
+      data[category] = (data[category] || 0) + deviceService.getDailyUsage(device.id);
+    });
+    return Object.entries(data).map(([category, usage]) => ({
+      category,
+      usage,
+    }));
+  }, [devices]);
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <>
@@ -235,6 +261,18 @@ export default function AnalyticsScreen() {
               </View>
             </View>
           </View>
+
+          <View style={styles.categoryStats}>
+            {categoryData.map(({ category, usage }) => (
+              <View key={category} style={styles.statCard}>
+                <Text style={styles.categoryName}>{category}</Text>
+                <Text style={styles.usageValue}>{usage.toFixed(2)} kWh</Text>
+                <Text style={styles.percentage}>
+                  {((usage / categoryData.reduce((sum, d) => sum + d.usage, 0)) * 100).toFixed(1)}%
+                </Text>
+              </View>
+            ))}
+          </View>
         </ScrollView>
       </View>
     </>
@@ -356,5 +394,36 @@ const styles = StyleSheet.create({
   },
   roomStatValue: {
     fontSize: 14,
+  },
+  categoryStats: {
+    padding: 16,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+  },
+  statCard: {
+    flex: 1,
+    minWidth: '45%',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    padding: 16,
+  },
+  categoryName: {
+    fontSize: 14,
+    fontFamily: 'Poppins_600SemiBold',
+    color: '#64748B',
+    textTransform: 'capitalize',
+    marginBottom: 4,
+  },
+  usageValue: {
+    fontSize: 24,
+    fontFamily: 'Poppins_600SemiBold',
+    color: '#0F172A',
+    marginBottom: 4,
+  },
+  percentage: {
+    fontSize: 14,
+    fontFamily: 'Poppins_400Regular',
+    color: '#10B981',
   },
 });

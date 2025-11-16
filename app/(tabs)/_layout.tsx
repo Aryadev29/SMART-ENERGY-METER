@@ -1,76 +1,95 @@
-import { Tabs } from 'expo-router';
-import { View, useColorScheme } from 'react-native';
-import { LayoutDashboard, Plug, PhoneIncoming as HomeIcon, ChartLine as LineChart, Settings } from 'lucide-react-native';
+import { Tabs, useRouter } from 'expo-router';
+import { useEffect } from 'react';
+import { ActivityIndicator, View } from 'react-native';
+import { Home, BarChart2, Settings, Smartphone, Grid } from 'lucide-react-native';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useFonts, Poppins_600SemiBold } from '@expo-google-fonts/poppins';
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const activeColor = colorScheme === 'dark' ? '#06B6D4' : '#0891B2';
-  const inactiveColor = colorScheme === 'dark' ? '#94A3B8' : '#64748B';
-  const backgroundColor = colorScheme === 'dark' ? '#1E293B' : '#F8FAFC';
+export default function TabsLayout() {
+  const router = useRouter();
+  const { isAuthenticated, isLoading } = useAuth();
+  const { isDark } = useTheme();
+  const [fontsLoaded] = useFonts({
+    Poppins_600SemiBold,
+  });
+
+  useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+      router.replace('/auth/sign-in');
+    }
+  }, [isLoading, isAuthenticated]);
+
+  if (isLoading || !fontsLoaded) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: isDark ? '#0F172A' : '#F8FAFC',
+        }}>
+        <ActivityIndicator size="large" color="#10B981" />
+      </View>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <Tabs
       screenOptions={{
-        headerShown: true,
+        tabBarActiveTintColor: '#10B981',
+        tabBarInactiveTintColor: isDark ? '#94A3B8' : '#64748B',
         tabBarStyle: {
-          backgroundColor: backgroundColor,
           borderTopWidth: 1,
-          borderTopColor: colorScheme === 'dark' ? '#334155' : '#E2E8F0',
-          height: 60,
-          paddingBottom: 8,
-          paddingTop: 8,
-        },
-        tabBarActiveTintColor: activeColor,
-        tabBarInactiveTintColor: inactiveColor,
-        tabBarLabelStyle: {
-          fontWeight: '500',
-          fontSize: 12,
-          marginTop: 2,
+          borderTopColor: isDark ? '#334155' : '#E2E8F0',
+          backgroundColor: isDark ? '#1E293B' : '#FFFFFF',
         },
         headerStyle: {
-          backgroundColor: backgroundColor,
-          borderBottomWidth: 1,
-          borderBottomColor: colorScheme === 'dark' ? '#334155' : '#E2E8F0',
+          backgroundColor: isDark ? '#0F172A' : '#F8FAFC',
         },
-        headerTintColor: colorScheme === 'dark' ? '#F8FAFC' : '#0F172A',
         headerTitleStyle: {
-          fontWeight: '600',
-          fontSize: 18,
+          fontFamily: 'Poppins_600SemiBold',
+          fontSize: 27,
+          color: isDark ? '#F8FAFC' : '#0F172A',
         },
       }}>
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ color, size }) => <LayoutDashboard size={size} color={color} />,
+          title: 'Overview',
+          tabBarIcon: ({ color }) => <Home size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="devices"
         options={{
-          title: 'Devices',
-          tabBarIcon: ({ color, size }) => <Plug size={size} color={color} />,
+          title: 'Device Management',
+          tabBarIcon: ({ color }) => <Smartphone size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="rooms"
         options={{
-          title: 'Rooms',
-          tabBarIcon: ({ color, size }) => <HomeIcon size={size} color={color} />,
+          title: 'Room Control',
+          tabBarIcon: ({ color }) => <Grid size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="analytics"
         options={{
-          title: 'Analytics',
-          tabBarIcon: ({ color, size }) => <LineChart size={size} color={color} />,
+          title: 'Analytics & Reports',
+          tabBarIcon: ({ color }) => <BarChart2 size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Settings',
-          tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
+          title:  'Settings & Profile',
+          tabBarIcon: ({ color }) => <Settings size={24} color={color} />,
         }}
       />
     </Tabs>

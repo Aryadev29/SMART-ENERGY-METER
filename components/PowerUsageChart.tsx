@@ -14,6 +14,7 @@ interface PowerUsageChartProps {
 
 export function PowerUsageChart({ data, isDark }: PowerUsageChartProps) {
   const [path, setPath] = useState('');
+  const [costPath, setCostPath] = useState('');
   
   const chartWidth = Dimensions.get('window').width - 64;
   const chartHeight = 160;
@@ -26,147 +27,75 @@ export function PowerUsageChart({ data, isDark }: PowerUsageChartProps) {
     if (data && data.length > 0) {
       // Find min and max for y-axis scaling
       const maxPower = Math.max(...data.map(d => d.power)) * 1.2; // Add 20% margin
+      const RATE_PER_KWH = 7; // ₹7 per kWh
       
-      // Create the path
-      let pathD = '';
+      // Create the power usage path
+      let powerPathD = '';
+      // Create the cost path
+      let costPathD = '';
+      
       data.forEach((point, i) => {
-        const x = paddingHorizontal + (i * (graphWidth / (data.length - 1)));
-        const y = paddingVertical + graphHeight - (point.power / maxPower * graphHeight);
+        const x = paddingHorizontal + (i * (graphWidth / Math.max(data.length - 1, 1)));
+        const powerY = paddingVertical + graphHeight - (point.power / maxPower * graphHeight);
+        const cost = point.power * RATE_PER_KWH;
+        const costY = paddingVertical + graphHeight - (cost / (maxPower * RATE_PER_KWH) * graphHeight);
         
         if (i === 0) {
-          pathD += `M ${x} ${y}`;
+          powerPathD += `M ${x} ${powerY}`;
+          costPathD += `M ${x} ${costY}`;
         } else {
-          pathD += ` L ${x} ${y}`;
+          powerPathD += ` L ${x} ${powerY}`;
+          costPathD += ` L ${x} ${costY}`;
         }
       });
       
-      setPath(pathD);
+      setPath(powerPathD);
+      setCostPath(costPathD);
     }
   }, [data]);
 
   return (
     <View style={styles.container}>
       <Svg width={chartWidth} height={chartHeight}>
-        {/* Horizontal grid lines */}
-        <Line 
-          x1={paddingHorizontal} 
-          y1={paddingVertical + graphHeight * 0.25} 
-          x2={paddingHorizontal + graphWidth} 
-          y2={paddingVertical + graphHeight * 0.25} 
-          stroke={isDark ? '#334155' : '#E2E8F0'} 
-          strokeWidth={1} 
-        />
-        <Line 
-          x1={paddingHorizontal} 
-          y1={paddingVertical + graphHeight * 0.5} 
-          x2={paddingHorizontal + graphWidth} 
-          y2={paddingVertical + graphHeight * 0.5} 
-          stroke={isDark ? '#334155' : '#E2E8F0'} 
-          strokeWidth={1} 
-        />
-        <Line 
-          x1={paddingHorizontal} 
-          y1={paddingVertical + graphHeight * 0.75} 
-          x2={paddingHorizontal + graphWidth} 
-          y2={paddingVertical + graphHeight * 0.75} 
-          stroke={isDark ? '#334155' : '#E2E8F0'} 
-          strokeWidth={1} 
-        />
+        {/* Grid lines */}
+        {[0, 1, 2, 3].map((i) => (
+          <Line
+            key={i}
+            x1={paddingHorizontal}
+            y1={paddingVertical + (i * graphHeight / 3)}
+            x2={chartWidth - paddingHorizontal}
+            y2={paddingVertical + (i * graphHeight / 3)}
+            stroke={isDark ? '#334155' : '#E2E8F0'}
+            strokeWidth="1"
+          />
+        ))}
         
-        {/* X-axis line */}
-        <Line 
-          x1={paddingHorizontal} 
-          y1={paddingVertical + graphHeight} 
-          x2={paddingHorizontal + graphWidth} 
-          y2={paddingVertical + graphHeight} 
-          stroke={isDark ? '#334155' : '#E2E8F0'} 
-          strokeWidth={1} 
-        />
-        
-        {/* Y-axis line */}
-        <Line 
-          x1={paddingHorizontal} 
-          y1={paddingVertical} 
-          x2={paddingHorizontal} 
-          y2={paddingVertical + graphHeight} 
-          stroke={isDark ? '#334155' : '#E2E8F0'} 
-          strokeWidth={1} 
-        />
-        
-        {/* The power usage line */}
+        {/* Power usage line */}
         <Path
           d={path}
-          stroke="#06B6D4"
-          strokeWidth={3}
+          stroke="#0891B2"
+          strokeWidth="2"
           fill="none"
         />
         
-        {/* X-axis labels */}
-        {data.filter((_, i) => i % Math.ceil(data.length / 4) === 0 || i === data.length - 1).map((point, i) => (
-          <SvgText
-            key={`x-label-${i}`}
-            x={paddingHorizontal + (i * (graphWidth / (Math.ceil(data.length / 4) - 1 + (data.length % Math.ceil(data.length / 4) === 0 ? 0 : 1))))}
-            y={paddingVertical + graphHeight + 15}
-            fontSize={10}
-            textAnchor="middle"
-            fill={isDark ? '#94A3B8' : '#64748B'}
-          >
-            {point.time}
-          </SvgText>
-        ))}
-        
-        {/* Y-axis labels */}
-        <SvgText
-          x={paddingHorizontal - 15}
-          y={paddingVertical + graphHeight}
-          fontSize={10}
-          textAnchor="end"
-          fill={isDark ? '#94A3B8' : '#64748B'}
-        >
-          0
-        </SvgText>
-        <SvgText
-          x={paddingHorizontal - 15}
-          y={paddingVertical + graphHeight * 0.75}
-          fontSize={10}
-          textAnchor="end"
-          fill={isDark ? '#94A3B8' : '#64748B'}
-        >
-          0.5
-        </SvgText>
-        <SvgText
-          x={paddingHorizontal - 15}
-          y={paddingVertical + graphHeight * 0.5}
-          fontSize={10}
-          textAnchor="end"
-          fill={isDark ? '#94A3B8' : '#64748B'}
-        >
-          1.0
-        </SvgText>
-        <SvgText
-          x={paddingHorizontal - 15}
-          y={paddingVertical + graphHeight * 0.25}
-          fontSize={10}
-          textAnchor="end"
-          fill={isDark ? '#94A3B8' : '#64748B'}
-        >
-          1.5
-        </SvgText>
-        <SvgText
-          x={paddingHorizontal - 15}
-          y={paddingVertical + 5}
-          fontSize={10}
-          textAnchor="end"
-          fill={isDark ? '#94A3B8' : '#64748B'}
-        >
-          2.0
-        </SvgText>
+        {/* Cost line */}
+        <Path
+          d={costPath}
+          stroke="#F59E0B"
+          strokeWidth="2"
+          fill="none"
+          opacity={0.6}
+        />
       </Svg>
       
       <View style={styles.legendContainer}>
         <View style={styles.legendItem}>
-          <View style={[styles.legendDot, { backgroundColor: '#06B6D4' }]} />
-          <Text style={[styles.legendText, { color: isDark ? '#94A3B8' : '#64748B' }]}>kW</Text>
+          <View style={[styles.legendDot, { backgroundColor: '#0891B2' }]} />
+          <Text style={[styles.legendText, { color: isDark ? '#94A3B8' : '#64748B' }]}>Power (kW)</Text>
+        </View>
+        <View style={styles.legendItem}>
+          <View style={[styles.legendDot, { backgroundColor: '#F59E0B' }]} />
+          <Text style={[styles.legendText, { color: isDark ? '#94A3B8' : '#64748B' }]}>Cost (₹/h)</Text>
         </View>
       </View>
     </View>
